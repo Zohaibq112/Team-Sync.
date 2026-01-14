@@ -1,16 +1,23 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18'
+        }
+    }
 
     stages {
-        stage('Checkout') {
+
+        stage('Install Backend Dependencies') {
             steps {
-                checkout scm
+                dir('backend') {
+                    sh 'npm install'
+                }
             }
         }
 
-        stage('Build Backend') {
+        stage('Install Frontend Dependencies') {
             steps {
-                dir('backend') {
+                dir('client') {
                     sh 'npm install'
                 }
             }
@@ -19,15 +26,14 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('client') {
-                    sh 'npm install'
                     sh 'npm run build'
                 }
             }
         }
 
-        stage('Test') {
+        stage('Success') {
             steps {
-                echo 'Tests stage (optional)'
+                echo '✅ MERN Jenkins Pipeline Completed Successfully'
             }
         }
     }
