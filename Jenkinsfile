@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'node18'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -27,7 +31,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                echo 'Tests can be added here'
+                echo 'Tests stage (optional)'
             }
         }
     }
