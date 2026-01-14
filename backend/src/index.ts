@@ -43,8 +43,8 @@ app.use(passport.session());
 
 app.use(
   cors({
-    origin: config.FRONTEND_ORIGIN,
-    credentials: true,
+  origin: [config.FRONTEND_ORIGIN, "http://localhost:8000"],
+  credentials: true
   })
 );
 
@@ -67,6 +67,9 @@ app.use(`${BASE_PATH}/workspace`, isAuthenticated, workspaceRoutes);
 app.use(`${BASE_PATH}/member`, isAuthenticated, memberRoutes);
 app.use(`${BASE_PATH}/project`, isAuthenticated, projectRoutes);
 app.use(`${BASE_PATH}/task`, isAuthenticated, taskRoutes);
+app.get("/api/health", (req, res) => {
+  res.json({ status: "Backend is running" });
+});
 
 app.use(errorHandler);
 

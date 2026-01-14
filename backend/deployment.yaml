@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kanban-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kanban-backend
+  template:
+    metadata:
+      labels:
+        app: kanban-backend
+    spec:
+      containers:
+        - name: kanban-backend
+          image: qzohaib/backend
+          ports:
+            - containerPort: 9000

@@ -19,6 +19,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    
+    /* Node.js Types */
+    "types": ["node"],  // Add this line to include Node.js types
+
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
