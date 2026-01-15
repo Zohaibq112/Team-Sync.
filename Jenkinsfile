@@ -1,39 +1,29 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18'
-        }
-    }
+    agent any
 
     stages {
 
-        stage('Install Backend Dependencies') {
+        stage('Backend Install') {
             steps {
-                dir('backend') {
-                    sh 'npm install'
-                }
+                sh 'docker run --rm -v $PWD/backend:/app -w /app node:18 npm install'
             }
         }
 
-        stage('Install Frontend Dependencies') {
+        stage('Frontend Install') {
             steps {
-                dir('client') {
-                    sh 'npm install'
-                }
+                sh 'docker run --rm -v $PWD/client:/app -w /app node:18 npm install'
             }
         }
 
         stage('Build Frontend') {
             steps {
-                dir('client') {
-                    sh 'npm run build'
-                }
+                sh 'docker run --rm -v $PWD/client:/app -w /app node:18 npm run build'
             }
         }
 
-        stage('Success') {
+        stage('Done') {
             steps {
-                echo '✅ MERN Jenkins Pipeline Completed Successfully'
+                echo '✅ Build finished successfully'
             }
         }
     }
