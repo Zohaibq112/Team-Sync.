@@ -3,27 +3,27 @@ pipeline {
 
     stages {
 
-        stage('Backend Install') {
+        stage('Install Backend') {
             steps {
-                sh 'docker run --rm -v $PWD/backend:/app -w /app node:18 npm install'
+                sh 'docker run --rm -v %cd%/backend:/app -w /app node:18 npm install'
             }
         }
 
-        stage('Frontend Install') {
+        stage('Install Frontend') {
             steps {
-                sh 'docker run --rm -v $PWD/client:/app -w /app node:18 npm install'
+                sh 'docker run --rm -v %cd%/client:/app -w /app node:18 npm install'
             }
         }
 
         stage('Build Frontend') {
             steps {
-                sh 'docker run --rm -v $PWD/client:/app -w /app node:18 npm run build'
+                sh 'docker run --rm -v %cd%/client:/app -w /app node:18 npm run build'
             }
         }
 
-        stage('Done') {
+        stage('Result') {
             steps {
-                echo '✅ Build finished successfully'
+                echo '✅ MERN project build successful'
             }
         }
     }
