@@ -1,30 +1,18 @@
-pipeline {
-    agent any
+version: "3.8"
 
-    stages {
+services:
+  backend:
+    build: ./backend
+    container_name: mern-backend
+    ports:
+      - "9000:9000"
+    env_file:
+      - ./backend/.env
 
-        stage('Install Backend') {
-            steps {
-                sh 'docker run --rm -v %cd%/backend:/app -w /app node:18 npm install'
-            }
-        }
-
-        stage('Install Frontend') {
-            steps {
-                sh 'docker run --rm -v %cd%/client:/app -w /app node:18 npm install'
-            }
-        }
-
-        stage('Build Frontend') {
-            steps {
-                sh 'docker run --rm -v %cd%/client:/app -w /app node:18 npm run build'
-            }
-        }
-
-        stage('Result') {
-            steps {
-                echo '✅ MERN project build successful'
-            }
-        }
-    }
-}
+  frontend:
+    build: ./client
+    container_name: mern-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
