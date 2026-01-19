@@ -2,11 +2,12 @@ version: "3.8"
 
 services:
   backend:
-    # ...
+    build: ./backend
+    ports:
+      - "9000:9000"
     environment:
-      NODE_ENV: production
       PORT: 9000
-      MONGO_URI: ${mongodb+srv://zohaibqazi941:URTOTiM77OculoKG@cluster0.yhs1hld.mongodb.net/}
+
 
   frontend:
     build: ./client
