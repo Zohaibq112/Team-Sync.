@@ -8,14 +8,15 @@ pipeline {
             }
         }
 
-        stage('Run Containers') {
-            steps {
-                sh '''
-                  docker-compose down || true
-                  docker-compose up -d
-                '''
-            }
-        }
+    stage('Run Containers') {
+    steps {
+        sh '''
+          docker-compose down --remove-orphans || true
+          docker-compose up -d --force-recreate
+        '''
+    }
+}
+
 
         stage('Verify') {
             steps {
