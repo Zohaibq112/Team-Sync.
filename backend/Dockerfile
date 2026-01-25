@@ -12,6 +12,11 @@ RUN npm install
 COPY tsconfig.json ./
 COPY src ./src
 
+
+
+# Copy env file
+COPY .env .env
+
 # Build TS -> JS
 RUN npm run build
 
