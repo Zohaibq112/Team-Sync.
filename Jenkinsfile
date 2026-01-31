@@ -2,26 +2,49 @@ pipeline {
     agent any
 
     stages {
+
         stage('Build Docker Images') {
             steps {
-                sh 'docker-compose build'
+                sh 'docker compose build'
             }
         }
 
-    stage('Run Containers') {
-    steps {
-        sh '''
-          docker-compose down --remove-orphans || true
-          docker-compose up -d --force-recreate
-        '''
-    }
-}
+        stage('Start Containers') {
+            steps {
+                sh '''
+                  docker compose down --remove-orphans || true
+                  docker compose up -d backend frontend selenium
+                '''
+            }
+        }
 
+        stage('Wait for Services') {
+            steps {
+                sh 'sleep 15'
+            }
+        }
+
+        stage('Run Selenium Tests') {
+            steps {
+                sh 'node tests/selenium/login.test.js'
+            }
+        }
 
         stage('Verify') {
             steps {
-                sh 'docker-compose ps'
+                sh 'docker compose ps'
             }
+        }
+    }
+
+    post {
+        failure {
+            echo "❌ Tests failed. Stopping containers."
+            sh 'docker compose down'
+        }
+
+        success {
+            echo "✅ Tests passed. Containers are valid."
         }
     }
 }
