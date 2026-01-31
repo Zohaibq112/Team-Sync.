@@ -37,3 +37,7 @@ services:
 networks:
   team-sync:
     driver: bridge
+
+    volumes:
+  jenkins_home:
+
