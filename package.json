@@ -1,12 +1,17 @@
 {
+  "name": "team-sync",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "client": "npm run dev --prefix client",
+    "server": "npm run dev --prefix server",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
   "devDependencies": {
-    "chromedriver": "^144.0.0",
-    "mocha": "^11.7.5",
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "chromedriver": "^144.0.1",
     "selenium-webdriver": "^4.40.0"
   }
-  "scripts": {
-  "selenium:test": "node tests/selenium/login.test.js && node tests/selenium/signup.test.js"
 }
-
-}
-
