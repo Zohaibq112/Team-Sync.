@@ -32,6 +32,7 @@ networks:
   team-sync:
     driver: bridge
 
-    volumes:
-  jenkins_home:
+volumes:
+  jenkins_home:/var/jenkins_home
+
 
