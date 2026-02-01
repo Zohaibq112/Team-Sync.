@@ -8,7 +8,6 @@ services:
     environment:
       PORT: 9000
 
-
   frontend:
     build: ./client
     ports:
@@ -28,11 +27,20 @@ services:
     networks:
       - team-sync
 
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: team-sync-jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - team-sync
+
 networks:
   team-sync:
     driver: bridge
 
 volumes:
-  jenkins_home:/var/jenkins_home
-
-
+  jenkins_home:
