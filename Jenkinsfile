@@ -5,7 +5,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/YourUsername/YourRepo.git'
+                git branch: 'main', url: 'https://github.com/Zohaibq112/Team-Sync.git'
             }
         }
 
