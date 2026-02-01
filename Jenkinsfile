@@ -3,6 +3,12 @@ pipeline {
 
     stages {
 
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/YourUsername/YourRepo.git'
+            }
+        }
+
         stage('Build Docker Images') {
             steps {
                 sh 'docker compose build'
