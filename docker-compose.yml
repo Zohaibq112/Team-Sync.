@@ -1,26 +1,20 @@
+version: "3.8"
+
 services:
   backend:
     build: ./backend
-    container_name: team-sync-backend
     ports:
       - "9000:9000"
     environment:
       PORT: 9000
-    networks:
-      - team-sync
+
 
   frontend:
-    build:
-      context: ./client
-      args:
-        VITE_API_BASE_URL: http://team-sync-backend:9000
-    container_name: team-sync-frontend
+    build: ./client
     ports:
-      - "5173:80"
+      - "3001:80"
     depends_on:
       - backend
-    networks:
-      - team-sync
 
   selenium:
     image: selenium/standalone-chrome
