@@ -7,6 +7,8 @@ services:
       - "9000:9000"
     environment:
       PORT: 9000
+    networks:
+      - team-sync
 
   frontend:
     build: ./client
@@ -14,6 +16,8 @@ services:
       - "3001:80"
     depends_on:
       - backend
+    networks:
+      - team-sync
 
   selenium:
     image: selenium/standalone-chrome
@@ -38,9 +42,9 @@ services:
     networks:
       - team-sync
 
+volumes:
+  jenkins_home:
+
 networks:
   team-sync:
     driver: bridge
-
-volumes:
-  jenkins_home:
