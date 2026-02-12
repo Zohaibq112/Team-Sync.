@@ -11,15 +11,15 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                sh 'docker-compose build'
+                sh 'docker compose build'
             }
         }
 
         stage('Start Containers') {
             steps {
                 sh '''
-                  docker-compose down --remove-orphans || true
-                  docker-compose up -d backend frontend selenium
+                  docker compose down --remove-orphans || true
+                  docker compose up -d backend frontend selenium
                 '''
             }
         }
@@ -38,7 +38,7 @@ pipeline {
 
         stage('Verify') {
             steps {
-                sh 'docker-compose ps'
+                sh 'docker compose ps'
             }
         }
     }
@@ -46,7 +46,7 @@ pipeline {
     post {
         failure {
             echo "❌ Tests failed. Stopping containers."
-            sh 'docker-compose down'
+            sh 'docker compose down'
         }
 
         success {
