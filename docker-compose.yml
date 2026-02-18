@@ -5,8 +5,6 @@ services:
     build: ./backend
     ports:
       - "9000:9000"
-    environment:
-      PORT: 9000
     networks:
       - team-sync
 
@@ -31,20 +29,15 @@ services:
     networks:
       - team-sync
 
-  jenkins:
-    image: jenkins/jenkins:lts
-    container_name: team-sync-jenkins
-    ports:
-      - "8080:8080"
-      - "50000:50000"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-    networks:
-      - team-sync
-
-volumes:
-  jenkins_home:
-
-networks:
-  team-sync:
-    driver: bridge
+jenkins:
+  build:
+    context: .
+    dockerfile: Dockerfile.jenkins
+  container_name: team-sync-jenkins
+  privileged: true
+  ports:
+    - "8080:8080"
+    - "50000:50000"
+  volumes:
+    - jenkins_home:/var/jenkins_home
+    - /var/run/docker.sock:/var/run/docker.sock
