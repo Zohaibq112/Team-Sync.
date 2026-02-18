@@ -1,12 +1,6 @@
 pipeline {
-    // FIXED: Removed the 'master' label since you don't have it
-    agent {
-        docker {
-            image 'docker:latest'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
-
+    agent any
+    
     environment {
         DOCKER_HOST = 'unix:///var/run/docker.sock'
         COMPOSE_PROJECT_NAME = "teamsync-${BUILD_NUMBER}"
@@ -19,68 +13,40 @@ pipeline {
             }
         }
 
-        stage('Debug - Check Environment') {
-            steps {
-                script {
-                    sh '''
-                        echo "=== Checking Docker ==="
-                        docker --version
-                        docker compose version || echo "Docker Compose plugin not available"
-                        
-                        echo "=== Checking Current Directory ==="
-                        pwd
-                        ls -la
-                        
-                        echo "=== Checking if backend directory exists ==="
-                        if [ -d "backend" ]; then
-                            echo "✅ backend directory found"
-                            ls -la backend/
-                        else
-                            echo "❌ backend directory NOT found"
-                        fi
-                    '''
-                }
-            }
-        }
-
-        stage('Build Docker Images') {
-            steps {
-                script {
-                    // Check if backend directory exists before building
-                    if (fileExists('backend')) {
-                        def customImage = docker.build("teamsync-backend:${BUILD_NUMBER}", "./backend")
-                        echo "✅ Backend image built successfully"
-                    } else {
-                        echo "⚠️ Backend directory not found, skipping specific build"
-                    }
-                    
-                    // Build all images with docker compose
-                    sh 'docker compose build'
-                }
-            }
-        }
-
-        stage('Start Containers') {
+        stage('Check Docker Availability') {
             steps {
                 script {
                     try {
-                        sh '''
-                            docker compose down --remove-orphans || true
-                            docker compose up -d
-                        '''
-                        echo "✅ Containers started successfully"
+                        // Check if docker command exists
+                        sh 'docker --version'
+                        echo "✅ Docker is available!"
                     } catch (Exception e) {
-                        error "Failed to start containers: ${e.message}"
+                        echo "❌ Docker is NOT available!"
+                        echo "Please make sure:"
+                        echo "1. Docker is installed on the host machine"
+                        echo "2. The Jenkins container has the Docker socket mounted"
+                        echo "3. Run this command on your host to fix:"
+                        echo "   docker exec -it jenkins_container_name sh -c 'apt-get update && apt-get install -y docker.io'"
+                        currentBuild.result = 'FAILURE'
+                        error("Docker is required but not found")
                     }
                 }
             }
         }
 
-        stage('Wait for Services') {
+        stage('Build and Test') {
             steps {
                 script {
+                    // Use docker compose directly (not inside a docker container)
                     sh '''
-                        echo "Waiting for services to be ready..."
+                        echo "=== Building images ==="
+                        docker compose build
+                        
+                        echo "=== Starting containers ==="
+                        docker compose down --remove-orphans || true
+                        docker compose up -d
+                        
+                        echo "=== Waiting for services ==="
                         timeout=60
                         elapsed=0
                         while [ $elapsed -lt $timeout ]; do
@@ -93,45 +59,13 @@ pipeline {
                             elapsed=$((elapsed+3))
                         done
                         
-                        if [ $elapsed -ge $timeout ]; then
-                            echo "⚠️ Timeout waiting for backend"
-                        fi
+                        echo "=== Running Selenium Tests ==="
+                        # Run tests in a node container
+                        docker run --rm --network="host" -v ${PWD}:/app -w /app node:18 sh -c "npm install && node tests/selenium/login.test.js"
+                        
+                        echo "=== Container Status ==="
+                        docker compose ps
                     '''
-                }
-            }
-        }
-
-        stage('Run Selenium Tests') {
-            steps {
-                script {
-                    // Check if tests directory exists
-                    if (fileExists('tests/selenium/login.test.js')) {
-                        try {
-                            docker.image('node:18').inside {
-                                sh '''
-                                    npm init -y
-                                    npm install selenium-webdriver
-                                    node tests/selenium/login.test.js
-                                '''
-                            }
-                        } catch (Exception e) {
-                            echo "⚠️ Tests failed but continuing: ${e.message}"
-                        }
-                    } else {
-                        echo "⚠️ Test file not found at tests/selenium/login.test.js"
-                        sh 'find . -name "*.test.js" || echo "No test files found"'
-                    }
-                }
-            }
-        }
-
-        stage('Verify') {
-            steps {
-                script {
-                    sh 'docker compose ps'
-                    
-                    // Show logs for debugging
-                    sh 'docker compose logs --tail=20'
                 }
             }
         }
@@ -140,10 +74,9 @@ pipeline {
     post {
         always {
             script {
-                echo "🧹 Cleaning up containers..."
+                echo "🧹 Cleaning up..."
                 try {
                     sh 'docker compose down -v --remove-orphans'
-                    sh 'docker image prune -f --filter "until=1h"'
                 } catch (Exception e) {
                     echo "Cleanup warning: ${e.message}"
                 }
@@ -152,22 +85,20 @@ pipeline {
 
         failure {
             script {
-                echo "❌ Tests failed. Capturing logs..."
+                echo "❌ Tests failed. Getting logs..."
                 try {
                     sh '''
                         echo "=== Backend Logs ==="
                         docker compose logs backend --tail=50
-                        echo "=== Selenium Logs ==="
-                        docker compose logs selenium --tail=50
                     '''
                 } catch (Exception e) {
-                    echo "Could not capture logs: ${e.message}"
+                    echo "Could not capture logs"
                 }
             }
         }
 
         success {
-            echo "✅ Tests passed! Pipeline completed successfully."
+            echo "✅ All tests passed!"
         }
     }
 }
