@@ -1,13 +1,17 @@
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "9000:9000"
     networks:
       - team-sync
 
   frontend:
-    build: ./client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
     ports:
       - "3001:80"
     depends_on:
@@ -39,9 +43,12 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - team-sync
 
 networks:
   team-sync:
+    driver: bridge
 
 volumes:
   jenkins_home:
