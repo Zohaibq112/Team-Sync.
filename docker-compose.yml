@@ -31,21 +31,6 @@ services:
     networks:
       - team-sync
 
-  jenkins:
-    build:
-      context: .
-      dockerfile: Dockerfile.jenkins
-    container_name: team-sync-jenkins
-    privileged: true
-    ports:
-      - "8080:8080"
-      - "50000:50000"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - team-sync
-
 networks:
   team-sync:
     driver: bridge
