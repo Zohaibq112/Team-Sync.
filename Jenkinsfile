@@ -16,23 +16,23 @@ pipeline {
         stage('Check Docker') {
             steps {
                 sh 'docker --version'
-                sh 'docker compose version'
+                sh 'docker-ompose version'
                 echo "Docker & Compose OK"
             }
         }
 
         stage('Build Images') {
             steps {
-                sh 'docker compose build'
+                sh 'docker-compose build'
             }
         }
 
         stage('Start Containers') {
             steps {
                 sh '''
-                    docker compose up -d
+                    docker-compose up -d
                     sleep 20
-                    docker compose ps
+                    docker-compose ps
                 '''
             }
         }
@@ -54,14 +54,14 @@ pipeline {
 
     post {
         always {
-            sh 'docker compose down -v'
+            sh 'docker-compose down -v'
         }
 
         failure {
             sh '''
-                docker compose logs backend --tail=50
-                docker compose logs frontend --tail=50
-                docker compose logs selenium --tail=50
+                docker-compose logs backend --tail=50
+                docker-compose logs frontend --tail=50
+                docker-compose logs selenium --tail=50
             '''
         }
 
