@@ -16,7 +16,7 @@ pipeline {
         stage('Check Docker') {
             steps {
                 sh 'docker --version'
-                sh 'docker-ompose version'
+                sh 'docker-compose version'
                 echo "Docker & Compose OK"
             }
         }
