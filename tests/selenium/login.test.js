@@ -2,14 +2,25 @@ const { Builder, By, Key, until } = require("selenium-webdriver");
 const fs = require("fs");
 
 async function loginTest() {
+  // Use environment variables with defaults
+  const seleniumHost = process.env.SELENIUM_HOST || 'localhost';
+  const frontendHost = process.env.FRONTEND_HOST || 'localhost';
+  const frontendPort = process.env.FRONTEND_PORT || '3001'; // Changed from 5173 to 3001
+  
+  const seleniumUrl = `http://${seleniumHost}:4444/wd/hub`;
+  const frontendUrl = `http://${frontendHost}:${frontendPort}/`;
+  
+  console.log(`Connecting to Selenium at: ${seleniumUrl}`);
+  console.log(`Testing frontend at: ${frontendUrl}`);
+  
   const driver = await new Builder()
     .forBrowser("chrome")
-    .usingServer("http://localhost:4444/wd/hub") // Selenium container
+    .usingServer(seleniumUrl)
     .build();
 
   try {
     // Go to login page
-    await driver.get("http://host.docker.internal:5173/");
+    await driver.get(frontendUrl);
 
     const emailField = await driver.wait(
       until.elementLocated(By.name("email")),

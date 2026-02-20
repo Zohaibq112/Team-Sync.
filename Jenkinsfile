@@ -37,20 +37,18 @@ pipeline {
             }
         }
 
-        stage('Run Selenium Tests') {
-            steps {
-                sh '''
-                    if [ -f "tests/selenium/login.test.js" ]; then
-                        cd tests/selenium
-                        npm install
-                        node login.test.js
-                    else
-                        echo "Test file not found"
-                    fi
-                '''
-            }
-        }
+stage('Run Selenium Tests') {
+    steps {
+        sh '''
+            cd tests/selenium
+            export SELENIUM_HOST=team-sync-selenium
+            export FRONTEND_HOST=teamsync-17_frontend_1
+            export FRONTEND_PORT=80
+            npm install
+            node login.test.js
+        '''
     }
+}
 
     post {
         always {
