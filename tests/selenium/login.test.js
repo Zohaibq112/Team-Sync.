@@ -2,12 +2,13 @@ const { Builder, By, Key, until } = require("selenium-webdriver");
 const fs = require("fs");
 
 async function loginTest() {
-  // Use environment variables with defaults
+  // Use localhost with published ports when running from host
   const seleniumHost = process.env.SELENIUM_HOST || 'localhost';
+  const seleniumPort = process.env.SELENIUM_PORT || '4444';
   const frontendHost = process.env.FRONTEND_HOST || 'localhost';
-  const frontendPort = process.env.FRONTEND_PORT || '3001'; // Changed from 5173 to 3001
+  const frontendPort = process.env.FRONTEND_PORT || '3001'; // From docker-compose ps output
   
-  const seleniumUrl = `http://${seleniumHost}:4444/wd/hub`;
+  const seleniumUrl = `http://${seleniumHost}:${seleniumPort}/wd/hub`;
   const frontendUrl = `http://${frontendHost}:${frontendPort}/`;
   
   console.log(`Connecting to Selenium at: ${seleniumUrl}`);
@@ -19,7 +20,6 @@ async function loginTest() {
     .build();
 
   try {
-    // Go to login page
     await driver.get(frontendUrl);
 
     const emailField = await driver.wait(
@@ -34,7 +34,6 @@ async function loginTest() {
     await emailField.sendKeys(process.env.TEST_EMAIL || "zohaibqazi9@gmail.com");
     await passwordField.sendKeys(process.env.TEST_PASSWORD || "zohaib123", Key.RETURN);
 
-    // Wait for workspace page (dynamic URL)
     await driver.wait(
       async () => {
         const url = await driver.getCurrentUrl();
