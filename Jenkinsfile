@@ -37,19 +37,17 @@ pipeline {
             }
         }
 
-       stage('Run Selenium Tests') {
-    steps {
-        sh '''
-            cd tests/selenium
-            export SELENIUM_HOST=localhost
-            export SELENIUM_PORT=4444
-            export FRONTEND_HOST=localhost
-            export FRONTEND_PORT=3001
-            npm install
-            node login.test.js
-        '''
-    }
-}
+        stage('Run Selenium Tests') {
+            steps {
+                sh '''
+                    cd tests/selenium
+                    export SELENIUM_HOST=host.docker.internal
+                    export FRONTEND_HOST=host.docker.internal
+                    npm install
+                    node login.test.js
+                '''
+            }
+        }
     }
 
     post {
