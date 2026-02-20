@@ -41,9 +41,10 @@ pipeline {
     steps {
         sh '''
             cd tests/selenium
-            export SELENIUM_HOST=team-sync-selenium
-            export FRONTEND_HOST=teamsync-17_frontend_1
-            export FRONTEND_PORT=80
+            export SELENIUM_HOST=localhost
+            export SELENIUM_PORT=4444
+            export FRONTEND_HOST=localhost
+            export FRONTEND_PORT=3001
             npm install
             node login.test.js
         '''
