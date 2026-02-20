@@ -37,7 +37,7 @@ pipeline {
             }
         }
 
-stage('Run Selenium Tests') {
+       stage('Run Selenium Tests') {
     steps {
         sh '''
             cd tests/selenium
@@ -49,6 +49,7 @@ stage('Run Selenium Tests') {
         '''
     }
 }
+    }
 
     post {
         always {
