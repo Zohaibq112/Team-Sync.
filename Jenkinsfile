@@ -17,7 +17,7 @@ pipeline {
             steps {
                 sh 'docker --version'
                 sh 'docker-compose version'
-                echo "Docker & Compose OK"
+                echo "Docker & Compose OK  "
             }
         }
 
