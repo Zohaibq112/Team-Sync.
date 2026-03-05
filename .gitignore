@@ -24,4 +24,4 @@ backend/env-secret.yaml
 terraform.tfstate
 terraform.tfstate.backup
 *.tfvars
-.terraform.lock.hcl
+*.pem
