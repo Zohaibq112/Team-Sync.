@@ -18,3 +18,10 @@ dist/
 # Secrets
 backend/env-secret.yaml
 
+# Terraform
+.terraform/
+**/.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+.terraform.lock.hcl
