@@ -78,8 +78,8 @@ pipeline {
             steps {
                 sh '''
                     cd tests/selenium
-                    export SELENIUM_HOST=host.docker.internal
-                    export FRONTEND_HOST=host.docker.internal
+                    export FRONTEND_HOST=host.docker.internal:3001
+                    export BACKEND_HOST=host.docker.internal:9000
                     npm install
                     node login.test.js
                 '''
