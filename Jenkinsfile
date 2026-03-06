@@ -12,21 +12,22 @@ pipeline {
     }
 
     stages {
-        stage('Verify AWS') {
-    steps {
-        withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'aws-credentials'
-        ]]) {
-            sh '''
-                aws sts get-caller-identity
-                aws ecr describe-repositories --region $AWS_REGION
-            '''
-        }
-    }
-}
 
-        // 0. Cleanup leftover containers from previous builds
+        // 0. Verify AWS
+        stage('Verify AWS') {
+            steps {
+                withCredentials([
+                    [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']
+                ]) {
+                    sh '''
+                        aws sts get-caller-identity
+                        aws ecr describe-repositories --region $AWS_REGION
+                    '''
+                }
+            }
+        }
+
+        // 1. Cleanup
         stage('Cleanup') {
             steps {
                 sh '''
@@ -38,14 +39,14 @@ pipeline {
             }
         }
 
-        // 1. Checkout
+        // 2. Checkout
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Zohaibq112/Team-Sync.git'
             }
         }
 
-        // 2. Check Docker
+        // 3. Check Docker
         stage('Check Docker') {
             steps {
                 sh 'docker --version'
@@ -54,14 +55,14 @@ pipeline {
             }
         }
 
-        // 3. Build Images
+        // 4. Build Images
         stage('Build Images') {
             steps {
                 sh 'docker-compose build'
             }
         }
 
-        // 4. Start Containers
+        // 5. Start Containers
         stage('Start Containers') {
             steps {
                 sh '''
@@ -72,7 +73,7 @@ pipeline {
             }
         }
 
-        // 5. Run Selenium Tests
+        // 6. Run Selenium Tests
         stage('Run Selenium Tests') {
             steps {
                 sh '''
@@ -85,7 +86,7 @@ pipeline {
             }
         }
 
-        // 6. Push Backend Image to ECR
+        // 7. Push Backend Image to ECR
         stage('Push Backend to ECR') {
             steps {
                 withCredentials([
@@ -93,20 +94,24 @@ pipeline {
                     string(credentialsId: 'ecr-registry', variable: 'ECR_REGISTRY')
                 ]) {
                     sh '''
+                        echo "=== Logging into ECR ==="
                         aws ecr get-login-password --region $AWS_REGION | \
                         docker login --username AWS --password-stdin $ECR_REGISTRY
 
-                        docker tag backend-container:latest $ECR_REGISTRY/$ECR_REPO_BACKEND:$IMAGE_TAG
-                        docker tag backend-container:latest $ECR_REGISTRY/$ECR_REPO_BACKEND:latest
+                        echo "=== Tagging Backend Image ==="
+                        docker tag ${COMPOSE_PROJECT_NAME}_backend:latest $ECR_REGISTRY/$ECR_REPO_BACKEND:$IMAGE_TAG
+                        docker tag ${COMPOSE_PROJECT_NAME}_backend:latest $ECR_REGISTRY/$ECR_REPO_BACKEND:latest
 
+                        echo "=== Pushing Backend to ECR ==="
                         docker push $ECR_REGISTRY/$ECR_REPO_BACKEND:$IMAGE_TAG
                         docker push $ECR_REGISTRY/$ECR_REPO_BACKEND:latest
+                        echo "=== Backend Push Complete ==="
                     '''
                 }
             }
         }
 
-        // 7. Push Frontend Image to ECR
+        // 8. Push Frontend Image to ECR
         stage('Push Frontend to ECR') {
             steps {
                 withCredentials([
@@ -114,17 +119,20 @@ pipeline {
                     string(credentialsId: 'ecr-registry', variable: 'ECR_REGISTRY')
                 ]) {
                     sh '''
-                        docker tag frontend-container:latest $ECR_REGISTRY/$ECR_REPO_FRONTEND:$IMAGE_TAG
-                        docker tag frontend-container:latest $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest
+                        echo "=== Tagging Frontend Image ==="
+                        docker tag ${COMPOSE_PROJECT_NAME}_frontend:latest $ECR_REGISTRY/$ECR_REPO_FRONTEND:$IMAGE_TAG
+                        docker tag ${COMPOSE_PROJECT_NAME}_frontend:latest $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest
 
+                        echo "=== Pushing Frontend to ECR ==="
                         docker push $ECR_REGISTRY/$ECR_REPO_FRONTEND:$IMAGE_TAG
                         docker push $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest
+                        echo "=== Frontend Push Complete ==="
                     '''
                 }
             }
         }
 
-        // 8. Deploy to EC2
+        // 9. Deploy to EC2
         stage('Deploy to EC2') {
             steps {
                 withCredentials([
@@ -134,6 +142,7 @@ pipeline {
                     string(credentialsId: 'mongodb-uri',  variable: 'MONGODB_URI')
                 ]) {
                     sh '''
+                        echo "=== Deploying to EC2 ==="
                         ssh -o StrictHostKeyChecking=no -i $SSH_KEY $EC2_USER@$EC2_HOST "
                             aws ecr get-login-password --region $AWS_REGION | \
                             docker login --username AWS --password-stdin $ECR_REGISTRY
@@ -158,13 +167,16 @@ pipeline {
                                 --restart always \
                                 --name frontend \
                                 $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest
+
+                            echo 'Deployment complete'
+                            docker ps
                         "
                     '''
                 }
             }
         }
 
-        // 9. Health Check
+        // 10. Health Check
         stage('Health Check') {
             steps {
                 sh '''
@@ -186,9 +198,9 @@ pipeline {
         failure {
             node('') {
                 sh '''
-                    docker-compose logs backend  --tail=50 || true
-                    docker-compose logs frontend --tail=50 || true
-                    docker-compose logs selenium --tail=50 || true
+                    docker-compose logs --tail 50 backend  || true
+                    docker-compose logs --tail 50 frontend || true
+                    docker-compose logs --tail 50 selenium || true
                 '''
             }
         }
