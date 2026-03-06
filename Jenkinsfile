@@ -13,6 +13,18 @@ pipeline {
 
     stages {
 
+        // 0. Cleanup leftover containers from previous builds
+        stage('Cleanup') {
+            steps {
+                sh '''
+                    docker-compose down -v || true
+                    docker rm -f backend frontend || true
+                    docker network prune -f || true
+                    docker ps -a
+                '''
+            }
+        }
+
         // 1. Checkout
         stage('Checkout') {
             steps {
