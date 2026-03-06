@@ -7,7 +7,7 @@ pipeline {
         ECR_REPO_BACKEND     = 'team-sync-backend'
         ECR_REPO_FRONTEND    = 'team-sync-frontend'
         IMAGE_TAG            = "${BUILD_NUMBER}"
-        EC2_HOST             = '98.92.46.165'
+        EC2_HOST             = '98.86.179.10'
         EC2_USER             = 'ec2-user'
     }
 
