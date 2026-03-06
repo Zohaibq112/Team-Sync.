@@ -12,6 +12,19 @@ pipeline {
     }
 
     stages {
+        stage('Verify AWS') {
+    steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'aws-credentials'
+        ]]) {
+            sh '''
+                aws sts get-caller-identity
+                aws ecr describe-repositories --region $AWS_REGION
+            '''
+        }
+    }
+}
 
         // 0. Cleanup leftover containers from previous builds
         stage('Cleanup') {
