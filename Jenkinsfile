@@ -73,8 +73,8 @@ pipeline {
                         aws ecr get-login-password --region $AWS_REGION | \
                         docker login --username AWS --password-stdin $ECR_REGISTRY
 
-                        docker tag teamsync-backend:latest $ECR_REGISTRY/$ECR_REPO_BACKEND:$IMAGE_TAG
-                        docker tag teamsync-backend:latest $ECR_REGISTRY/$ECR_REPO_BACKEND:latest
+                        docker tag backend-container:latest $ECR_REGISTRY/$ECR_REPO_BACKEND:$IMAGE_TAG
+                        docker tag backend-container:latest $ECR_REGISTRY/$ECR_REPO_BACKEND:latest
 
                         docker push $ECR_REGISTRY/$ECR_REPO_BACKEND:$IMAGE_TAG
                         docker push $ECR_REGISTRY/$ECR_REPO_BACKEND:latest
@@ -91,8 +91,8 @@ pipeline {
                     credentialsId: 'aws-credentials'
                 ]]) {
                     sh '''
-                        docker tag teamsync-frontend:latest $ECR_REGISTRY/$ECR_REPO_FRONTEND:$IMAGE_TAG
-                        docker tag teamsync-frontend:latest $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest
+                        docker tag frontend-container:latest $ECR_REGISTRY/$ECR_REPO_FRONTEND:$IMAGE_TAG
+                        docker tag frontend-container:latest $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest
 
                         docker push $ECR_REGISTRY/$ECR_REPO_FRONTEND:$IMAGE_TAG
                         docker push $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest
