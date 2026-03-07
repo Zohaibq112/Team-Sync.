@@ -11,30 +11,23 @@ provider "aws" {
   region = var.aws_region
 }
 
-# ───────────────── AMI ─────────────────
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
-
   filter {
     name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 }
 
-# ─────────────── RANDOM ID ─────────────
 resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# ─────────────── VPC ───────────────────
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
-
-  tags = {
-    Name = "${var.app_name}-vpc"
-  }
+  tags = { Name = "${var.app_name}-vpc" }
 }
 
 resource "aws_subnet" "public" {
@@ -42,10 +35,7 @@ resource "aws_subnet" "public" {
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = true
-
-  tags = {
-    Name = "${var.app_name}-subnet"
-  }
+  tags = { Name = "${var.app_name}-subnet" }
 }
 
 resource "aws_internet_gateway" "igw" {
@@ -54,7 +44,6 @@ resource "aws_internet_gateway" "igw" {
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
-
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
@@ -66,7 +55,6 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# ───────────── Security Group ──────────
 resource "aws_security_group" "app_sg" {
   name   = "${var.app_name}-sg"
   vpc_id = aws_vpc.main.id
@@ -78,7 +66,6 @@ resource "aws_security_group" "app_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
     description = "HTTP"
     from_port   = 80
@@ -86,7 +73,6 @@ resource "aws_security_group" "app_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
     description = "Node Backend"
     from_port   = 3000
@@ -94,7 +80,6 @@ resource "aws_security_group" "app_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -103,18 +88,14 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# ───────────── IAM Role for EC2 ────────
 resource "aws_iam_role" "ec2_ecr_role" {
   name = "${var.app_name}-ec2-ecr-role"
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
-      Action = "sts:AssumeRole"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
+      Principal = { Service = "ec2.amazonaws.com" }
     }]
   })
 }
@@ -129,9 +110,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   role = aws_iam_role.ec2_ecr_role.name
 }
 
-# ───────────── EC2 Backend ─────────────
 resource "aws_instance" "backend" {
-
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.public.id
@@ -139,73 +118,58 @@ resource "aws_instance" "backend" {
   key_name               = var.key_name
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
-  user_data = <<-EOF
+  user_data = <<-USERDATA
 #!/bin/bash
-
 yum update -y
 yum install -y docker aws-cli
-
 service docker start
 usermod -a -G docker ec2-user
+chkconfig docker on
+USERDATA
 
-aws ecr get-login-password --region ${var.aws_region} | \
-docker login --username AWS --password-stdin ${var.ecr_registry}
-
-docker pull ${var.ecr_image_uri}
-
-docker run -d \
-  -p 3000:3000 \
-  -e MONGODB_URI="${var.mongodb_uri}" \
-  -e PORT=3000 \
-  --restart always \
-  --name backend \
-  ${var.ecr_image_uri}
-
-EOF
-
-  tags = {
-    Name = "${var.app_name}-backend"
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [user_data]
   }
+
+  tags = { Name = "${var.app_name}-backend" }
 }
 
-# ───────────── S3 Frontend ─────────────
+resource "aws_eip" "backend" {
+  instance = aws_instance.backend.id
+  domain   = "vpc"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  tags = { Name = "${var.app_name}-eip" }
+}
+
 resource "aws_s3_bucket" "frontend" {
-  bucket = "${var.app_name}-frontend-${random_id.suffix.hex}"
-
-  tags = {
-    Name = "${var.app_name}-frontend"
-  }
-}
-
-resource "aws_s3_bucket_website_configuration" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
-  index_document {
-    suffix = "index.html"
-  }
-
-  error_document {
-    key = "index.html"
-  }
+  bucket        = "${var.app_name}-frontend-${random_id.suffix.hex}"
+  force_destroy = true
+  tags          = { Name = "${var.app_name}-frontend" }
 }
 
 resource "aws_s3_bucket_public_access_block" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
+  bucket                  = aws_s3_bucket.frontend.id
   block_public_acls       = false
   block_public_policy     = false
   ignore_public_acls      = false
   restrict_public_buckets = false
 }
 
+resource "aws_s3_bucket_website_configuration" "frontend" {
+  bucket     = aws_s3_bucket.frontend.id
+  depends_on = [aws_s3_bucket_public_access_block.frontend]
+  index_document { suffix = "index.html" }
+  error_document { key    = "index.html" }
+}
+
 resource "aws_s3_bucket_policy" "frontend" {
-
-  depends_on = [
-    aws_s3_bucket_public_access_block.frontend
-  ]
-
-  bucket = aws_s3_bucket.frontend.id
-
+  bucket     = aws_s3_bucket.frontend.id
+  depends_on = [aws_s3_bucket_public_access_block.frontend]
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -217,3 +181,4 @@ resource "aws_s3_bucket_policy" "frontend" {
     }]
   })
 }
+
