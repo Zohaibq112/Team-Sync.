@@ -75,11 +75,12 @@ pipeline {
 
         // 6. Run Selenium Tests
         stage('Run Selenium Tests') {
+               stage('Run Selenium Tests') {
             steps {
                 sh '''
                     cd tests/selenium
-                    export FRONTEND_HOST=host.docker.internal:3001
-                    export BACKEND_HOST=host.docker.internal:9000
+                    export SELENIUM_HOST=host.docker.internal
+                    export FRONTEND_HOST=host.docker.internal
                     npm install
                     node login.test.js
                 '''
